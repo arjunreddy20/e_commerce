@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>e_commerce</title>
+    </head>
+    <body>
+        <label for="price">Selling Price:</label>
+        <input type="number" id="price" name="price" required/>
+        
+        <label for="product">Product Name:</label>
+        <input type="text" id="product" name="product" required />
+        
+        <button id="addProductButton">Add product</button>
+        <br><br><br>
+        
+        <h1 id="h1">Products</h1>
+        <ul id="details"></ul>
+        <h2 id="h2">Total value of Products = <span id="totalValue">0</span></h2>
+
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+        <script>
+            const apiUrl = 'https://crudcrud.com/api/a4ed5ddc960247239c34c23f4cbe85ba/e_com';
+            let totalValue = 0;
+
+            function getProducts() {
+                axios.get(apiUrl)
+                    .then(response => {
+                        const products = response.data;
+                        const detailsList = document.getElementById("details");
+                        detailsList.innerHTML = ''; 
+                        totalValue = 0; 
+
+                        products.forEach(product => {
+                            const li = document.createElement('li');
+                            li.textContent = `${product.product} - $${product.price}`;
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.onclick = function() {
+                                deleteProduct(product._id, product.price);
+                            };
+                            li.appendChild(deleteButton);
+                            detailsList.appendChild(li);
+
+                            totalValue += parseFloat(product.price);
+                        });
+                        document.getElementById("totalValue").textContent = totalValue.toFixed(2);
+                    })
+                    .catch(error => console.error('Error fetching products:', error));
+            }
+
+            function addProduct() {
+                const price = document.getElementById("price").value;
+                const product = document.getElementById("product").value;
+
+                if (price && product) {
+                    const newProduct = {
+                        product: product,
+                        price: price
+                    };
+
+                    axios.post(apiUrl, newProduct)
+                        .then(response => {
+                            getProducts(); 
+                        })
+                        .catch(error => console.error('Error adding product:', error));
+
+                    document.getElementById("price").value = '';
+                    document.getElementById("product").value = '';
+                } else {
+                    alert('Please provide both product name and price.');
+                }
+            }
+
+            function deleteProduct(productId, price) {
+                axios.delete(`${apiUrl}/${productId}`)
+                    .then(response => {
+                        getProducts(); 
+                    })
+                    .catch(error => console.error('Error deleting product:', error));
+
+                totalValue -= parseFloat(price);
+                document.getElementById("totalValue").textContent = totalValue.toFixed(2);
+            }
+
+            document.getElementById("addProductButton").addEventListener("click", addProduct);
+
+            window.onload = function() {
+                getProducts();
+            };
+        </script>
+    </body>
+</html>
